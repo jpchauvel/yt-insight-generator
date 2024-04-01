@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "yt-insight-generator"
+version = "0.1.0"
+description = "An Sphinx article generator that creates Youtube video's insights using OpenAI's API."
+authors = ["Jean-Pierre Chauvel <jean.p.chauvel@gmail.com>"]
+license = "CC0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+openai = "^1.14.3"
+youtube-transcript-api = "^0.6.2"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
