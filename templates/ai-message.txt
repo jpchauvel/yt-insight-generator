@@ -11,13 +11,13 @@ Notes:
 ---
 blogpost: true
 date: {{ date }}
-author: {{ author }}
-{% if category %}category: {{ category }}{% endif %}
-tags: {{ tags }}
+author: {{ author }}{% if category %}
+category: {{ category }}
+{% endif %}tags: {{ tags }}
 ---
 - Insert somewhere in the generated Markdown text the video ID `{{ video_id }}`
   with the following format (Include the three backticks before and after the
   youtube directive):
-- Generate the content in {{ language }}.
 ```{youtube} the_video_id
 ```
+- Generate the content in {{ language }}.
