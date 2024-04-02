@@ -92,7 +92,6 @@ def get_args():
         dest="tags",
         nargs="+",
         type=str,
-        required=True,
         help="The tags of the article.",
     )
     args = parser.parse_args()
