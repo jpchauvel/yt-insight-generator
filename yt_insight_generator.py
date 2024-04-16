@@ -6,10 +6,41 @@ from urllib.parse import urlparse, parse_qs
 
 from youtube_transcript_api import YouTubeTranscriptApi
 from openai import OpenAI
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import BaseLoader, Environment
 
 CONF_FILE = "~/.config/openai.token"
 AI_TAG = "ai-generated"
+TEMPLATE = """
+The following text is a transcript from a YouTube video. Write a post in
+Markdown giving an insight about the content of the video:
+```
+{{ transcript }}
+```
+Notes:
+- Avoid generating text about any sponsorships.
+- The generated Markdown should be in 80 columns.
+- Prepend the generated Markdown with the following directive (include the
+  three dashes):
+---
+blogpost: true
+date: {{ date }}
+author: {{ author }}
+{% if category %}
+category: {{ category }}
+{% endif %}
+tags: {{ tags }}
+---
+- Insert somewhere in the generated Markdown text the video ID `{{ video_id }}`
+  with the following format (Include the three backticks before and after the
+  youtube directive):
+```{youtube} the_video_id
+```
+- Generate the content in {{ language }}.
+- Include several sections.
+{%if words %}
+- Use at least {{ words }} words.
+{% endif %}
+"""
 
 
 class KnownError(Exception):
@@ -45,7 +76,7 @@ def get_video_id(video_url):
 
 def get_args():
     parser = argparse.ArgumentParser(
-        description="An Sphinx article generator that creates YouTube video's"
+        description="A Sphinx post generator that creates YouTube video's"
         " insights using OpenAI's API.",
     )
     parser.add_argument(
@@ -62,7 +93,7 @@ def get_args():
         dest="destination",
         type=str,
         required=True,
-        help="The Markdown (.md extension) output file of the article.",
+        help="The Markdown (.md extension) output file of the post.",
     )
     parser.add_argument(
         "-l",
@@ -70,7 +101,7 @@ def get_args():
         dest="language",
         type=str,
         default="English",
-        help="The language of the resulting article."
+        help="The language of the resulting post."
     )
     parser.add_argument(
         "-a",
@@ -78,32 +109,37 @@ def get_args():
         dest="author",
         type=str,
         required=True,
-        help="The name of the author of the article.",
+        help="The name of the author of the post.",
     )
     parser.add_argument(
         "-c",
         "--category",
         dest="category",
         type=str,
-        help="The category of the article."
+        help="The category of the post.",
+    )
+    parser.add_argument(
+        "-w",
+        "--words",
+        dest="words",
+        type=str,
+        help="The number of words for the post.",
     )
     parser.add_argument(
         "-t",
         dest="tags",
         nargs="+",
         type=str,
-        help="The tags of the article.",
+        help="The tags of the post.",
     )
     args = parser.parse_args()
     return args
 
 
 def get_message_template():
-    env = Environment(
-        loader=PackageLoader("yt_insight_generator", "templates"),
-        autoescape=select_autoescape(),
-    )
-    template = env.get_template("ai-message.txt")
+    template = Environment(
+        loader=BaseLoader, trim_blocks=True, lstrip_blocks=True
+    ).from_string(TEMPLATE)
     return template
 
 
@@ -127,6 +163,7 @@ def main():
                     date=datetime.date.today().strftime("%d %b, %Y"),
                     author=args.author,
                     category=args.category,
+                    words=args.words,
                     tags=", ".join(args.tags + [AI_TAG]),
                     language=args.language,
                     video_id=video_id,
